@@ -1,66 +1,65 @@
-import { Alert, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React, { useEffect, useState } from 'react'
-
+import { Alert, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
 
 export default function ApiScreen() {
-  const API_MUSICA= 'https://jritsqmet.github.io/web-api/musica.json'
-  const [musica, setMusica] = useState([]);
+  const API_FUTURAMA='https://api.sampleapis.com/futurama/characters'
+  const [data, setdata] = useState([])
 
   useEffect(() => {
-    fetch(API_MUSICA)
+    fetch(API_FUTURAMA)
     .then(response => response.json())
-    .then(datos => setMusica(datos))
-    .catch(error => console.log(error)) 
+    .then(datos => setdata(datos))
+    .catch(error => console.log(error))
+    
+    console.log(data);
+  }, [])
 
-    console.log(musica);
-  }, []);
-
-  type Musica ={
-    title:string,
-    album:string,
-    artist:string,
-    description:string,
-    media:{cover_image:string}
-}
+  type Personaje ={
+    name: {first:string, last:string},
+    species: string,
+    images: {main:string},
+    age:number,
+    homePlanet: string,
+    occupation: string
+  }
 
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Lista de Música</Text>
-      <FlatList
-        data={musica}
-        renderItem={({item}:{item:Musica})=>
-          <View style={styles.view} >
-            <Text>Tiulo:{item.album}</Text>
-          </View>
-        }
-      />
-    </View>
+    <View>
+    <Text style={{fontSize:20, textAlign:'center'}}>Lista</Text>
+    <FlatList 
+      data={ data }
+      renderItem={({item}:{item: Personaje})=>
+        <View style={styles.item}>
+          <View style={styles.view}>
+            <Text>Nombre: {item.name.first}{item.name.last}</Text>
+            <Text>Especie: {item.species}</Text>
+            <Text>Edad: {item.age}</Text>
+            <Text>Planeta: {item.homePlanet}</Text>
+            <Text>Ocupación: {item.occupation}</Text>
+            </View>
+            <Image 
+            src={item.images.main}
+            style={styles.img}
+            />
+        </View>
+      }
+    />
+  </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-      flex: 1,
-      backgroundColor: 'white',
-      alignItems: 'center',
-      justifyContent: 'center',
-  },
   item:{
-      backgroundColor: '#a24b11f7',
-      margin:10,
-      // flexDirection:'row'
+    backgroundColor:'#666',
+    margin:5,
+    flexDirection:'row',
+    
   },
   img:{
-      height:80,
-      width:80,
-      resizeMode:'contain'
-  },
-  title: {
-    fontSize: 24,
-    marginBottom: 20,
-    textAlign: 'center',
-    fontWeight: 'bold',
+    height:'80%',
+    width:'40%',
+    resizeMode:'contain'
   },
   view:{
     marginRight:40,

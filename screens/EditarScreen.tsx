@@ -1,7 +1,8 @@
-import { StyleSheet, Text, View, TextInput, Button, Alert } from 'react-native';
+import { StyleSheet, Text, View, TextInput, Button, Alert, FlatList } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { db } from '../config/Config';
 import { onValue, ref, remove, set, update, get, child } from "firebase/database";
+import Informacion from '../components/Informacion';
 
 export default function EditarScreen() {
   const [id, setId] = useState('');
@@ -10,57 +11,36 @@ export default function EditarScreen() {
   const [precio, setPrecio] = useState('');
   const [descripcion, setDescripcion] = useState('');
 
-  const [lista, setlista] = useState([])
+  const [lista, setLista] = useState([])
 
-  // Función para cargar datos del registro por ID
-  const cargarDatosRegistro = async () => {
+  // Función para actualizar un registro
+  const editarRegistro = () => {
     if (id) {
-      try {
-        const snapshot = await get(child(ref(db), `Productos/${id}`));
-        if (snapshot.exists()) {
-          const { name, cant, price, description } = snapshot.val();
-          setNombre(name);
-          setCantidad(cant);
-          setPrecio(price);
-          setDescripcion(description);
-        } else {
-          Alert.alert('Error', 'No se encontró ningún registro con ese ID.');
-          limpiarCampos();
-        }
-      } catch (error) {
-        console.error('Error al cargar datos del registro: ', error);
-      }
+      update(ref(db, 'Productos/' + id), {
+        name: nombre,
+        cant: cantidad,
+        price: precio,
+        descripcion: descripcion
+      })
+      .then(() => {
+        Alert.alert('Mensaje', 'Se editó exitosamente!!');
+        limpiarCampos();
+      })
+      .catch((error) => {
+        console.error('Error al editar producto: ', error);
+      });
     } else {
-      Alert.alert('Error', 'Ingresa un ID válido para cargar los datos del registro.');
+      Alert.alert('Error', 'Para editar un producto, debes ingresar un ID válido.');
     }
   };
 
-  // Función para guardar o actualizar un registro
-  const guardarOActualizarRegistro = () => {
-    try {
-      if (id) {
-        update(ref(db, 'Productos/' + id), {
-          name: nombre,
-          cant: cantidad,
-          price: precio,
-          description: descripcion
-        });
-        Alert.alert('Mensaje', 'Producto actualizado correctamente');
-      } else {
-        set(ref(db, 'Productos'), {
-          name: nombre,
-          cant: cantidad,
-          price: precio,
-          description: descripcion
-        });
-        Alert.alert('Mensaje', 'Producto almacenado correctamente');
-      }
-    } catch (error) {
-      console.error('Error al guardar o actualizar producto: ', error);
-    }
-
-    limpiarCampos();
-  };
+  const cargardatos = (item: any) => {
+    setId(item.key);
+    setNombre(item.name);
+    setCantidad(item.cant);
+    setPrecio(item.price);
+    setDescripcion(item.descripcion);
+  }
 
   // Función para eliminar un registro
   const eliminarRegistro = () => {
@@ -100,29 +80,33 @@ export default function EditarScreen() {
     setPrecio('');
     setDescripcion('');
   };
-  
-  //Leer
-  function leer(){
+
+  //////////////LEER///////////////////
+  function leer() {
     const starCountRef = ref(db, 'Productos/');  //linea ruta para leer datos
-  onValue(starCountRef, (snapshot) => {
-    const data = snapshot.val();
-    // console.log(data);
-  
-    //CAMBIO DE FORMATO DE LOS DATOS
-    const listaTemp:any =Object.keys(data).map((id)=>({
-      key: id, ...data[id]
-    }))
-  
-    // console.log(listaTemp);
-    setlista(listaTemp)
-    
-  });
+    onValue(starCountRef, (snapshot) => {
+      const data = snapshot.val();
+      // console.log(data);
+
+      //CAMBIO DE FORMATO DE LOS DATOS
+      const listaTemp: any = Object.keys(data).map((key) => ({
+        key, ...data[key]
+      }))
+
+      // console.log(listaTemp);
+      setLista(listaTemp)
+    });
   }
-  
+
   useEffect(() => {
     leer()
   }, [])
-  
+
+  type Productos = {
+    key: string
+    name: string
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Editar Producto</Text>
@@ -131,10 +115,6 @@ export default function EditarScreen() {
         placeholder="Id"
         value={id}
         onChangeText={setId}
-      />
-      <Button
-        title="Cargar Datos"
-        onPress={cargarDatosRegistro}
       />
       <TextInput
         style={styles.input}
@@ -162,17 +142,31 @@ export default function EditarScreen() {
         value={descripcion}
         onChangeText={setDescripcion}
       />
-      <View style={styles.buttonContainer}>
-        <Button
-          title="Guardar/Actualizar"
-          onPress={guardarOActualizarRegistro}
-        />
-        <Button
-          title="Eliminar"
-          onPress={eliminarRegistro}
-          color="red"
-        />
-      </View>
+      <Button
+        title="Guardar"
+        onPress={editarRegistro}
+        color="blue"
+      />
+      <FlatList
+        data={lista}
+        renderItem={({ item }: { item: Productos }) =>
+          <View>
+            <Informacion data={item}/>
+            <View style={styles.buttonContainer}>
+              <Button
+                title="Editar"
+                onPress={() => cargardatos(item)}
+                color="green"
+              />
+              <Button
+                title="Eliminar"
+                onPress={eliminarRegistro}
+                color="red"
+              />
+            </View>
+          </View>
+        }
+      />
     </View>
   );
 }
